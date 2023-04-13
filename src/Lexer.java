@@ -286,7 +286,7 @@ public class Lexer {
                         state = 11;
                         lexeme.append(currentChar);
                     } else if (Character.isWhitespace(currentChar)) {
-                        pos++;
+                        //pos++;
                         state = 21;
                         lexeme.append(currentChar);
                     } else if (currentChar == '.') {
@@ -625,6 +625,7 @@ public class Lexer {
                         state = 34;
                         lexeme.append(currentChar);
                     } else if (Character.isLetter(currentChar)) {
+                        pos++;
                         state = 20;
                         lexeme.append(currentChar);
                     }
@@ -879,12 +880,305 @@ public class Lexer {
                     break;
 
                 case 53:
-                    if (Character.isWhitespace(currentChar)) {
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'f') {
+                            lexeme.append(currentChar);
+                            state = 54;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
 
                         state = 21;
+                        lexeme.append(currentChar);
                     }
                     break;
 
+                case 54:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'i') {
+                            lexeme.append(currentChar);
+                            state = 55;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 55:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'n') {
+                            lexeme.append(currentChar);
+                            state = 56;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 56:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'e') {
+                            lexeme.append(currentChar);
+                            state = 57;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 57: // character literal state
+                    if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 58;
+                        lexeme.append(currentChar);
+                    } else if (Character.isLetter(currentChar)) {
+                        pos++;
+                        state = 20;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 58: // finish floating point
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 59:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'o') {
+                            lexeme.append(currentChar);
+                            state = 60;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 60:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'n') {
+                            lexeme.append(currentChar);
+                            state = 61;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 61:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'd') {
+                            lexeme.append(currentChar);
+                            state = 62;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 62: // character literal state
+                    if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 63;
+                        lexeme.append(currentChar);
+                    } else if (Character.isLetter(currentChar)) {
+                        pos++;
+                        state = 20;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 63: // cond finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 64:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'f') {
+                            lexeme.append(currentChar);
+                            state = 65;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 65: // character literal state
+                    if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 66;
+                        lexeme.append(currentChar);
+                    } else if (Character.isLetter(currentChar)) {
+                        pos++;
+                        state = 20;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 66: // cond finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 67:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'e') {
+                            lexeme.append(currentChar);
+                            state = 68;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+
+                case 68:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'g') {
+                            lexeme.append(currentChar);
+                            state = 69;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 69:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'i') {
+                            lexeme.append(currentChar);
+                            state = 70;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 70:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'n') {
+                            lexeme.append(currentChar);
+                            state = 71;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 71: // character literal state
+                    if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 72;
+                        lexeme.append(currentChar);
+                    } else if (Character.isLetter(currentChar)) {
+                        pos++;
+                        state = 20;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 72: // begin finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
             }
         }
 
