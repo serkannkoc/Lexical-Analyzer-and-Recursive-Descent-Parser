@@ -3,18 +3,18 @@ public class Token {
         NUMBER,BOOLEAN,CHAR,STRING,DEFINE,LET,COND,IF,BEGIN,IDENTIFIER,ERROR};
 
     private Type type;
-    private String lexeme;
+    private StringBuilder lexeme;
 
-    public Token(Type type, String lexeme) {
+    public Token(Type type, StringBuilder lexeme) {
         this.type = type;
-        this.lexeme = lexeme;
+        this.lexeme = new StringBuilder(lexeme);
     }
 
     public Type getType() {
         return type;
     }
 
-    public String getLexeme() {
+    public StringBuilder getLexeme() {
         return lexeme;
     }
 
