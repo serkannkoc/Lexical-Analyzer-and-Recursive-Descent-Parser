@@ -231,12 +231,13 @@ public class Lexer {
                         pos++;
                         //state = 3;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         // pos++ yok
                         state = 5;
                         lexeme.append(currentChar);
                     }
                     break;
+
                 case 4: // character literal state
                     if (digitHashSetWithZero.contains(currentChar)) {
                         pos++;
@@ -246,7 +247,7 @@ public class Lexer {
                         pos++;
                         state = 1;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         //pos++ yok
                         state = 5;
                         lexeme.append(currentChar);
@@ -272,8 +273,8 @@ public class Lexer {
                         pos++;
                         state = 4;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
-                        pos++;
+                    } else if (Character.isWhitespace(currentChar)) {
+                        //pos++;
                         state = 21;
                         lexeme.append(currentChar);
                     }
@@ -284,7 +285,7 @@ public class Lexer {
                         pos++;
                         state = 11;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         pos++;
                         state = 21;
                         lexeme.append(currentChar);
@@ -300,7 +301,7 @@ public class Lexer {
                         pos++;
                         //state = 9;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         pos++;
                         state = 12;
                         lexeme.append(currentChar);
@@ -320,7 +321,7 @@ public class Lexer {
                         pos++;
                         state = 13;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         pos++;
                         state = 12;
                         lexeme.append(currentChar);
@@ -344,7 +345,7 @@ public class Lexer {
                         pos++;
                         state = 11;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         pos++;
                         state = 12;
                         lexeme.append(currentChar);
@@ -364,7 +365,7 @@ public class Lexer {
                         pos++;
                         //state==12;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         pos++;
                         // state = 12;
                         lexeme.append(currentChar);
@@ -376,7 +377,7 @@ public class Lexer {
                         pos++;
                         //state = 13;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         pos++;
                         state = 12;
                         lexeme.append(currentChar);
@@ -430,7 +431,7 @@ public class Lexer {
                         pos++;
                         //state = 18;
                         lexeme.append(currentChar);
-                    } else if (currentChar == ' ') {
+                    } else if (Character.isWhitespace(currentChar)) {
                         // pos++;
                         state = 19;
                         lexeme.append(currentChar);
@@ -443,6 +444,420 @@ public class Lexer {
                     state = 0;
                     break;
 
+                case 20: // character literal state
+                    if (customHashSet2.contains(currentChar) || (currentChar == '|')) {
+                        pos++;
+                        //state = 20;
+                        lexeme.append(currentChar);
+                    } else if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 21: //identifier finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 22: // character literal state
+                    if (digitHashSetWithZero.contains(currentChar)) {
+                        pos++;
+                        state = 24;
+                        lexeme.append(currentChar);
+                    } else if ((currentChar == '+') || (currentChar == '-')) {
+                        pos++;
+                        state = 23;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 23:
+                    if (digitHashSetWithZero.contains(currentChar)) {
+                        pos++;
+                        state = 24;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 24:
+                    if (digitHashSetWithZero.contains(currentChar)) {
+                        pos++;
+                        //state = 24;
+                        lexeme.append(currentChar);
+                    } else if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 25;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 25: // finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 26:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'a') {
+                            lexeme.append(currentChar);
+                            state = 27;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 27:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'l') {
+                            lexeme.append(currentChar);
+                            state = 29;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 28:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'u') {
+                            lexeme.append(currentChar);
+                            state = 30;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 29:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 's') {
+                            lexeme.append(currentChar);
+                            state = 32;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 30:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'e') {
+                            lexeme.append(currentChar);
+                            state = 31;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 31: // character literal state
+                    if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 34;
+                        lexeme.append(currentChar);
+                    } else if (Character.isLetter(currentChar)) {
+                        state = 20;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 32:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'e') {
+                            lexeme.append(currentChar);
+                            state = 33;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 33: // character literal state
+                    if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 34;
+                        lexeme.append(currentChar);
+                    } else if (Character.isLetter(currentChar)) {
+                        state = 20;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 34: // boolean finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 35: // character literal state
+                    if (currentChar == '\'') {
+                        //pos++;
+                        state = 38;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 36: // character literal state
+                    if (currentChar == '\'') { // "single quote"
+                        pos++;
+                        state = 35;
+                        lexeme.append(currentChar);
+                    } else if (currentChar == '\\') {
+                        pos++;
+                        state = 37;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 37:
+                    if (currentChar == '\'') {
+                        //pos++;
+                        state = 38;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 38: // character finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 39: // character literal state
+                    if (currentChar == '\\') {
+                        pos++;
+                        state = 36;
+                        lexeme.append(currentChar);
+                    } else if (Character.isUnicodeIdentifierPart(currentChar)) {
+                        // current character is a Unicode character
+                        // do something here
+                        pos++;
+                        state = 40;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 40: // character literal state
+                    if (currentChar == '\'') { //  '\'' -> '
+                        //pos++;
+                        state = 38;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 41: // character literal state
+                    if (currentChar == '\\') {
+                        pos++;
+                        state = 43;
+                        lexeme.append(currentChar);
+                    } else if (Character.isUnicodeIdentifierPart(currentChar)) {
+                        // current character is a Unicode character
+                        // do something here
+                        pos++;
+                        state = 42;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 42: // character literal state
+                    if (currentChar == '\\') {
+                        pos++;
+                        state = 43;
+                        lexeme.append(currentChar);
+                    } else if (currentChar == '"') {
+                        //pos++;
+                        state = 46;
+                        lexeme.append(currentChar);
+                    } else if (Character.isUnicodeIdentifierPart(currentChar)) {
+                        // current character is a Unicode character
+                        // do something here
+                        pos++;
+                        //state = 42;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 43: // character literal state
+                    if (currentChar == '\\') {
+                        pos++;
+                        state = 45;
+                        lexeme.append(currentChar);
+                    } else if (currentChar == '\'') {
+                        pos++;
+                        state = 44;
+                        lexeme.append(currentChar);
+                    } else if (Character.isUnicodeIdentifierPart(currentChar)) {
+                        // current character is a Unicode character
+                        // do something here
+                        pos++;
+                        //state = 42;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 44: // character literal state
+                    if (currentChar == '\\') {
+                        pos++;
+                        state = 43;
+                        lexeme.append(currentChar);
+                    } else if (currentChar == '"') {
+                        //pos++;
+                        state = 46;
+                        lexeme.append(currentChar);
+                    } else if (Character.isUnicodeIdentifierPart(currentChar)) {
+                        // current character is a Unicode character
+                        // do something here
+                        pos++;
+                        state = 42;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 45: // character literal state
+                    if (currentChar == '\\') {
+                        pos++;
+                        state = 43;
+                        lexeme.append(currentChar);
+                    } else if (currentChar == '"') {
+                        //pos++;
+                        state = 46;
+                        lexeme.append(currentChar);
+                    } else if (Character.isUnicodeIdentifierPart(currentChar)) {
+                        // current character is a Unicode character
+                        // do something here
+                        pos++;
+                        state = 42;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 46: // character finish state
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
+
+                case 47:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'r') {
+                            lexeme.append(currentChar);
+                            state = 28;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 48:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 'e') {
+                            lexeme.append(currentChar);
+                            state = 49;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 49:
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        if (currentChar == 't') {
+                            lexeme.append(currentChar);
+                            state = 50;
+                        } else if (Character.isLetter(currentChar)) {
+                            lexeme.append(currentChar);
+                            state = 20;
+                        } else {
+                            return new Token(Token.Type.ERROR, lexeme);
+                        }
+                    } else if (Character.isWhitespace(currentChar)) {
+
+                        state = 21;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 50: // character literal state
+                    if (Character.isLetter(currentChar)) {
+                        pos++;
+                        state = 20;
+                        lexeme.append(currentChar);
+                    } else if (Character.isWhitespace(currentChar)) {
+                        //pos++;
+                        state = 51;
+                        lexeme.append(currentChar);
+                    }
+                    break;
+
+                case 51: // finish floating point
+                    pos++;
+                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
+                    state = 0;
+                    break;
 
                 case 52:
                     if (Character.isLetter(currentChar)) {
@@ -462,16 +877,14 @@ public class Lexer {
                         lexeme.append(currentChar);
                     }
                     break;
+
                 case 53:
                     if (Character.isWhitespace(currentChar)) {
 
                         state = 21;
                     }
                     break;
-                case 21:
-                    pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    break;
+
             }
         }
 
