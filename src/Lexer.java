@@ -6,7 +6,7 @@ public class Lexer {
     private String input;
     private int pos;
     private Token currentToken;
-    private HashMap<String, Token> keywords;
+    private int index;
     private HashSet<Character> digitHashSetWithOutZero;
     private HashSet<Character> digitHashSetWithZero;
     private HashSet<String> plusMinusHashSet;
@@ -15,21 +15,15 @@ public class Lexer {
     private HashSet<Character> hexadecimalHashSet;
     private HashSet<Character> customHashSet;
     private HashSet<Character> customHashSet2;
-
+    private HashSet<Character> bracketsSet;
 
     public Lexer(String input) {
         this.input = input;
         this.pos = 0;
         this.currentToken = null;
+        this.index = 1;
 
-        // Initialize keyword table
-        keywords = new HashMap<String, Token>();
-        keywords.put("define", new Token(Token.Type.DEFINE, new StringBuilder("define")));
-        keywords.put("let", new Token(Token.Type.LET, new StringBuilder("let")));
-        keywords.put("cond", new Token(Token.Type.COND, new StringBuilder("cond")));
-        keywords.put("if", new Token(Token.Type.IF, new StringBuilder("if")));
-        keywords.put("begin", new Token(Token.Type.BEGIN, new StringBuilder("begin")));
-        // ...
+
 
         digitHashSetWithOutZero = new HashSet<>();
         for (char c = '1'; c <= '9'; c++) {
@@ -37,7 +31,7 @@ public class Lexer {
         }
         digitHashSetWithZero = new HashSet<>();
         for (char c = '0'; c <= '9'; c++) {
-            digitHashSetWithOutZero.add(c);
+            digitHashSetWithZero.add(c);
         }
         plusMinusHashSet = new HashSet<>();
         plusMinusHashSet.add("+");
@@ -98,6 +92,13 @@ public class Lexer {
         customHashSet2.add('+');
         customHashSet2.add('-');
 
+        bracketsSet = new HashSet<>();
+        bracketsSet.add('(');
+        bracketsSet.add(')');
+        bracketsSet.add('[');
+        bracketsSet.add(']');
+        bracketsSet.add('{');
+        bracketsSet.add('}');
     }
 
     public Token getNextToken() {
@@ -105,9 +106,12 @@ public class Lexer {
         int state = 0;
         StringBuilder lexeme = new StringBuilder("");
         char currentChar = ' ';
+        index = pos;
 
-        while (pos < input.length()) {
+        while (pos < input.length() ) {
             currentChar = input.charAt(pos);
+//            if(currentToken != null)
+//                break;
 
             switch (state) {
                 case 0: // initial state
@@ -167,29 +171,32 @@ public class Lexer {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
+                    } else if (currentChar == '(') {
+                        pos++;
+                        return new Token(Token.Type.LEFTPAR, new StringBuilder("("),index);
+                    } else if (currentChar == ')') {
+                        pos++;
+                        return new Token(Token.Type.RIGHTPAR, new StringBuilder(")"),index);
+                    } else if (currentChar == '[') {
+                        pos++;
+                        return new Token(Token.Type.LEFTSQUAREB, new StringBuilder("["),index);
+                    } else if (currentChar == ']') {
+                        pos++;
+                        return new Token(Token.Type.RIGHTSQUAREB, new StringBuilder("]"),index);
+                    } else if (currentChar == '{') {
+                        pos++;
+                        return new Token(Token.Type.LEFTCURLYB, new StringBuilder("{"),index);
+                    } else if (currentChar == '}') {
+                        pos++;
+                        return new Token(Token.Type.RIGHTCURLYB, new StringBuilder("}"),index);
+                    } else if (currentChar == ' '){
+                        pos++;
+                        index = pos;
                     }
-
 //                    } else if (currentChar == '~') {
 //                        state = 1; // switch to comment state
-//                    } else if (currentChar == '(') {
-//                        pos++;
-//                        return new Token(Token.Type.LEFTPAR, "(");
-//                    } else if (currentChar == ')') {
-//                        pos++;
-//                        return new Token(Token.Type.RIGHTPAR, ")");
-//                    } else if (currentChar == '[') {
-//                        pos++;
-//                        return new Token(Token.Type.LEFTSQUAREB, "[");
-//                    } else if (currentChar == ']') {
-//                        pos++;
-//                        return new Token(Token.Type.RIGHTSQUAREB, "]");
-//                    } else if (currentChar == '{') {
-//                        pos++;
-//                        return new Token(Token.Type.LEFTCURLYB, "{");
-//                    } else if (currentChar == '}') {
-//                        pos++;
-//                        return new Token(Token.Type.RIGHTCURLYB, "}");
-//                    } else if (Character.isDigit(currentChar)) {
+//                    }
+//                    }   else if (Character.isDigit(currentChar)) {
 //                        lexeme += currentChar;
 //                        state = 2; // switch to number state
 //                    } else if (currentChar == '\'') {
@@ -231,10 +238,11 @@ public class Lexer {
                         pos++;
                         //state = 3;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        // pos++ yok
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 5;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -247,18 +255,17 @@ public class Lexer {
                         pos++;
                         state = 1;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        //pos++ yok
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 5;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 5: // finish floating point
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.NUMBER, lexeme,index);
 
                 case 6:
                     if (digitHashSetWithZero.contains(currentChar)) {
@@ -273,10 +280,11 @@ public class Lexer {
                         pos++;
                         state = 4;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -285,10 +293,11 @@ public class Lexer {
                         pos++;
                         state = 11;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     } else if (currentChar == '.') {
                         pos++;
                         state = 6;
@@ -301,10 +310,11 @@ public class Lexer {
                         pos++;
                         //state = 9;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 12;
-                        lexeme.append(currentChar);
+
                     } else if (currentChar == '.') {
                         pos++;
                         state = 6;
@@ -321,10 +331,11 @@ public class Lexer {
                         pos++;
                         state = 13;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 12;
-                        lexeme.append(currentChar);
+
                     } else if (currentChar == 'x') {
                         pos++;
                         state = 14;
@@ -337,6 +348,8 @@ public class Lexer {
                         pos++;
                         state = 22;
                         lexeme.append(currentChar);
+                    } else {
+                        return new Token(Token.Type.ERROR,lexeme,index);
                     }
                     break;
 
@@ -345,10 +358,11 @@ public class Lexer {
                         pos++;
                         state = 11;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 12;
-                        lexeme.append(currentChar);
+
                     } else if (currentChar == '.') {
                         pos++;
                         state = 6;
@@ -364,11 +378,13 @@ public class Lexer {
                     if (digitHashSetWithZero.contains(currentChar)) {
                         pos++;
                         //state==12;
-                        lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        pos++;
-                        // state = 12;
-                        lexeme.append(currentChar);
+                        char nextChar = input.charAt(pos);
+                        if(Character.isDigit(nextChar))
+                            lexeme.append(currentChar);
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
+                        state = 73;
                     }
                     break;
 
@@ -377,10 +393,11 @@ public class Lexer {
                         pos++;
                         //state = 13;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 12;
-                        lexeme.append(currentChar);
+
                     } else if (currentChar == '.') {
                         pos++;
                         state = 6;
@@ -414,9 +431,7 @@ public class Lexer {
 
                 case 16: // finish hex state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.NUMBER, lexeme,index);
 
                 case 17: // character literal state
                     if (binaryDigitHashSet.contains(currentChar)) {
@@ -431,36 +446,37 @@ public class Lexer {
                         pos++;
                         //state = 18;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        // pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 19;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 19: // finish binary state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.NUMBER, lexeme,index);
 
                 case 20: // character literal state
                     if (customHashSet2.contains(currentChar) || (currentChar == '|')) {
                         pos++;
                         //state = 20;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                        if(pos == input.length()){
+                            return new Token(Token.Type.IDENTIFIER,lexeme,index);
+                        }
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 21: //identifier finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.IDENTIFIER, lexeme,index);
 
                 case 22: // character literal state
                     if (digitHashSetWithZero.contains(currentChar)) {
@@ -487,18 +503,18 @@ public class Lexer {
                         pos++;
                         //state = 24;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 25;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 25: // finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.NUMBER, lexeme,index);
+
 
                 case 26:
                     if (Character.isLetter(currentChar)) {
@@ -510,11 +526,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -528,11 +546,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -546,11 +566,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -564,11 +586,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -582,20 +606,23 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 31: // character literal state
-                    if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                    if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 34;
-                        lexeme.append(currentChar);
-                    } else if (Character.isLetter(currentChar)) {
+
+                } else if (Character.isLetter(currentChar)) {
                         state = 20;
                         lexeme.append(currentChar);
                     }
@@ -611,20 +638,23 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 33: // character literal state
-                    if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                    if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 34;
-                        lexeme.append(currentChar);
-                    } else if (Character.isLetter(currentChar)) {
+
+                } else if (Character.isLetter(currentChar)) {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
@@ -633,9 +663,8 @@ public class Lexer {
 
                 case 34: // boolean finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.BOOLEAN, lexeme,index);
+
 
                 case 35: // character literal state
                     if (currentChar == '\'') {
@@ -667,9 +696,7 @@ public class Lexer {
 
                 case 38: // character finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.CHAR, lexeme,index);
 
                 case 39: // character literal state
                     if (currentChar == '\\') {
@@ -781,9 +808,8 @@ public class Lexer {
 
                 case 46: // character finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.STRING, lexeme,index);
+
 
                 case 47:
                     if (Character.isLetter(currentChar)) {
@@ -795,12 +821,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -814,12 +841,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -833,12 +861,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -847,18 +876,17 @@ public class Lexer {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
-                    } else if (Character.isWhitespace(currentChar)) {
-                        //pos++;
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 51;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 51: // finish floating point
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.LET, lexeme,index);
 
                 case 52:
                     if (Character.isLetter(currentChar)) {
@@ -870,12 +898,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -889,12 +918,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -908,12 +938,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -927,12 +958,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -946,21 +978,23 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 57: // character literal state
-                    if (Character.isWhitespace(currentChar)) {
-                        //pos++;
-                        state = 58;
-                        lexeme.append(currentChar);
-                    } else if (Character.isLetter(currentChar)) {
+                    if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                    if (bracketsSet.contains(currentChar))
+                        pos--;
+                    state = 58;
+
+                } else if (Character.isLetter(currentChar)) {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
@@ -969,9 +1003,7 @@ public class Lexer {
 
                 case 58: // finish floating point
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.DEFINE, lexeme,index);
 
                 case 59:
                     if (Character.isLetter(currentChar)) {
@@ -983,12 +1015,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -1002,12 +1035,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -1021,21 +1055,23 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 62: // character literal state
-                    if (Character.isWhitespace(currentChar)) {
-                        //pos++;
-                        state = 63;
-                        lexeme.append(currentChar);
-                    } else if (Character.isLetter(currentChar)) {
+                    if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                    if (bracketsSet.contains(currentChar))
+                        pos--;
+                    state = 63;
+
+                } else if (Character.isLetter(currentChar)) {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
@@ -1044,9 +1080,8 @@ public class Lexer {
 
                 case 63: // cond finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.COND, lexeme,index);
+
 
                 case 64:
                     if (Character.isLetter(currentChar)) {
@@ -1058,21 +1093,23 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 65: // character literal state
-                    if (Character.isWhitespace(currentChar)) {
-                        //pos++;
-                        state = 66;
-                        lexeme.append(currentChar);
-                    } else if (Character.isLetter(currentChar)) {
+                    if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                    if (bracketsSet.contains(currentChar))
+                        pos--;
+                    state = 66;
+
+                } else if (Character.isLetter(currentChar)) {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
@@ -1081,9 +1118,8 @@ public class Lexer {
 
                 case 66: // cond finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.IF, lexeme,index);
+
 
                 case 67:
                     if (Character.isLetter(currentChar)) {
@@ -1095,12 +1131,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -1115,12 +1152,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -1134,12 +1172,13 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
@@ -1153,21 +1192,23 @@ public class Lexer {
                             lexeme.append(currentChar);
                             state = 20;
                         } else {
-                            return new Token(Token.Type.ERROR, lexeme);
+                            return new Token(Token.Type.ERROR, lexeme,index);
                         }
-                    } else if (Character.isWhitespace(currentChar)) {
-
+                    } else if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                        if (bracketsSet.contains(currentChar))
+                            pos--;
                         state = 21;
-                        lexeme.append(currentChar);
+
                     }
                     break;
 
                 case 71: // character literal state
-                    if (Character.isWhitespace(currentChar)) {
-                        //pos++;
-                        state = 72;
-                        lexeme.append(currentChar);
-                    } else if (Character.isLetter(currentChar)) {
+                    if (Character.isWhitespace(currentChar) || bracketsSet.contains(currentChar)) {
+                    if (bracketsSet.contains(currentChar))
+                        pos--;
+                    state = 72;
+
+                } else if (Character.isLetter(currentChar)) {
                         pos++;
                         state = 20;
                         lexeme.append(currentChar);
@@ -1176,9 +1217,10 @@ public class Lexer {
 
                 case 72: // begin finish state
                     pos++;
-                    currentToken = new Token(Token.Type.IDENTIFIER, lexeme);
-                    state = 0;
-                    break;
+                    return new Token(Token.Type.BEGIN, lexeme,index);
+                case 73:
+                    pos++;
+                    return new Token(Token.Type.NUMBER,lexeme,index);
             }
         }
 
