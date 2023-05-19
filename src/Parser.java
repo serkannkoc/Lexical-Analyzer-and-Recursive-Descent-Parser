@@ -119,15 +119,7 @@ public class Parser {
 
     private void statements() {
         expression();
-        /*if (currentToken.getType() == TokenType.LEFTPAR ||
-                currentToken.getType() == TokenType.IDENTIFIER ||
-                currentToken.getType() == TokenType.NUMBER ||
-                currentToken.getType() == TokenType.CHAR ||
-                currentToken.getType() == TokenType.BOOLEAN ||
-                currentToken.getType() == TokenType.STRING) {
-            expression();
-        } else*/
-        if (currentToken.getType() == TokenType.DEFINE) {
+        if (currentToken.getType() == Token.Type.DEFINE) {
             definition();
             statements();
         } else {
@@ -208,16 +200,16 @@ public class Parser {
     }
 
     private void letExpr() {
-        if (currentToken.getType() == TokenType.LEFTPAR) {
-            match(TokenType.LEFTPAR);
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR);
             varDefs();
-            match(TokenType.RIGHTPAR);
+            match(Token.Type.RIGHTPAR);
             statements();
-        } else if (currentToken.getType() == TokenType.IDENTIFIER) {
-            match(TokenType.IDENTIFIER);
-            match(TokenType.LEFTPAR);
+        } else if (currentToken.getType() == Token.Type.IDENTIFIER) {
+            match(Token.Type.IDENTIFIER);
+            match(Token.Type.LEFTPAR);
             varDefs();
-            match(TokenType.RIGHTPAR);
+            match(Token.Type.RIGHTPAR);
             statements();
         } else {
             // Handle syntax error
@@ -225,42 +217,48 @@ public class Parser {
     }
 
     private void varDefs() {
-        if (currentToken.getType() == TokenType.LEFTPAR) {
-            match(TokenType.LEFTPAR);
-            match(TokenType.IDENTIFIER);
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR);
+            match(Token.Type.IDENTIFIER);
             expression();
-            match(TokenType.RIGHTPAR);
+            match(Token.Type.RIGHTPAR);
             varDef();
         }
     }
 
-    private void varDef() {
-        if (currentToken.getType() == TokenType.LEFTPAR) {
-            varDefs();
-        }
+    private void varDef() { // TODO: Epsilon eklenecek
+        varDefs();
     }
 
 
     private void condBranches() {
-        if (currentToken.getType() == TokenType.LEFTPAR) {
-            match(TokenType.LEFTPAR);
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR);
             expression();
             statements();
-            match(TokenType.RIGHTPAR);
-            condBranches();
+            match(Token.Type.RIGHTPAR);
+            condBranch();
+        }
+    }
+
+    private void condBranch() { // TODO: Epsilon eklenecek
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR);
+            expression();
+            statements();
+            match(Token.Type.RIGHTPAR);
         }
     }
 
 
-    private void endExpression() {
-        if (currentToken.getType() == TokenType.IDENTIFIER ||
+    private void endExpression() { // TODO: Epsilon eklenecek
+        /*if (currentToken.getType() == TokenType.IDENTIFIER ||
                 currentToken.getType() == TokenType.NUMBER ||
                 currentToken.getType() == TokenType.CHAR ||
                 currentToken.getType() == TokenType.BOOLEAN ||
                 currentToken.getType() == TokenType.STRING ||
-                currentToken.getType() == TokenType.LEFTPAR) {
-            expression();
-        }
+                currentToken.getType() == TokenType.LEFTPAR) {*/
+        expression();
     }
 
 
