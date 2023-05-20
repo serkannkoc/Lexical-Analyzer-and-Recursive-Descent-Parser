@@ -5,34 +5,26 @@ public class Parser {
     private ArrayList<Token> tokens;
     private int currentTokenIndex;
     private Token currentToken;
-    private int tabCounter;
+
 
 
     public Parser(ArrayList<Token> tokens) {
         this.tokens = tokens;
         this.currentTokenIndex = 0;
-        this.tabCounter = 0;
         this.currentToken = tokens.get(0);
     }
 
-    private void printGrammar(String grammarName) {
+    private void printGrammar(String grammarName,int tabCounter) {
         StringBuilder grammar = new StringBuilder();
         for (int i = 0; i < tabCounter; i++) {
             grammar.append("\t");
         }
         grammar.append(grammarName);
         System.out.println(grammar.toString());
-        tabCounter++;
     }
 
-    private void printLexeme(boolean changeTabCounter) {
-        if(changeTabCounter){
-            if (tokens.get(currentTokenIndex-1).getType() == Token.Type.RIGHTPAR){
-                tabCounter--;
-            }else {
-                tabCounter++;
-            }
-        }
+    private void printLexeme(int tabCounter) {
+        tabCounter++;
         StringBuilder lexeme = new StringBuilder();
         for (int i = 0; i < tabCounter; i++) {
             lexeme.append("\t");
@@ -44,221 +36,286 @@ public class Parser {
         System.out.println(lexeme.toString());
     }
 
+    private void printSpace(int tabCounter){
+        tabCounter++;
+        StringBuilder space = new StringBuilder();
+        for (int i = 0; i < tabCounter; i++) {
+            space.append("\t");
+        }
+        space.append("_____");
+        System.out.println(space.toString());
+    }
+
     public void parse() {
         program();
     }
 
-    private void program() { // TODO: Epsilon eklenecek
-        printGrammar("<Program>");
-//        if (currentTokenIndex >= tokens.size()) {
-//            return; // epsilon case (end of token list)
-//        }
-        topLevelForm();
-        program();
+    private void program() {
+        int programTabCount = 0;
+
+        if (currentTokenIndex < tokens.size()) {
+            printGrammar("<Program>",programTabCount);
+            topLevelForm(programTabCount);
+            program();
+        }else {
+            printGrammar("<Program>",programTabCount);
+            printSpace(programTabCount);
+        }
+
     }
 
-    private void topLevelForm() {
-        printGrammar("<TopLevelForm>");
-        match(Token.Type.LEFTPAR,true);
-        secondLevelForm();
-        match(Token.Type.RIGHTPAR,true);
+
+    private void topLevelForm(int prevTabCount) {
+        int topLevelFormTabCount = prevTabCount+1;
+        printGrammar("<TopLevelForm>",topLevelFormTabCount);
+        match(Token.Type.LEFTPAR,topLevelFormTabCount);
+        secondLevelForm(topLevelFormTabCount);
+        match(Token.Type.RIGHTPAR,topLevelFormTabCount);
     }
 
-    private void secondLevelForm() {
-        printGrammar("<SecondLevelForm>");
-        definition();
+    private void secondLevelForm(int prevTabCount) {
+        int secondLevelFormTabCount = prevTabCount+1;
+        printGrammar("<SecondLevelForm>",secondLevelFormTabCount);
+        definition(secondLevelFormTabCount);
         if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            funCall();
-            match(Token.Type.RIGHTPAR,true);
+            match(Token.Type.LEFTPAR,secondLevelFormTabCount);
+            funCall(secondLevelFormTabCount);
+            match(Token.Type.RIGHTPAR,secondLevelFormTabCount);
         }
     }
 
-    private void definition() {
-        printGrammar("<Definition>");
+    private void definition(int prevTabCount) {
+        int definitionTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.DEFINE) {
-            match(Token.Type.DEFINE,true);
-            definitionRight();
+            printGrammar("<Definition>",definitionTabCount);
+            match(Token.Type.DEFINE,definitionTabCount);
+            definitionRight(definitionTabCount);
         }
     }
 
-    private void definitionRight() {
-        printGrammar("<DefinitionRight>");
+    private void definitionRight(int prevTabCount) {
+        int definitionRightTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER,true);
-            expression();
+            printGrammar("<DefinitionRight>",definitionRightTabCount);
+            match(Token.Type.IDENTIFIER,definitionRightTabCount);
+            expression(definitionRightTabCount);
         } else if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            match(Token.Type.IDENTIFIER,false);
-            argList();
-            match(Token.Type.RIGHTPAR,true);
-            statements();
+            printGrammar("<DefinitionRight>",definitionRightTabCount);
+            match(Token.Type.LEFTPAR,definitionRightTabCount);
+            match(Token.Type.IDENTIFIER,definitionRightTabCount);
+            argList(definitionRightTabCount);
+            match(Token.Type.RIGHTPAR,definitionRightTabCount);
+            statements(definitionRightTabCount);
         }
     }
 
-    private void argList() { // TODO: Epsilon
-        printGrammar("<ArgList>");
+    private void argList(int prevTabCount) {
+        int argListTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER,true);
-            argList();
+            printGrammar("<ArgList>",argListTabCount);
+            match(Token.Type.IDENTIFIER,argListTabCount);
+            argList(argListTabCount);
+        }else {
+            printGrammar("<ArgList>",argListTabCount);
+            printSpace(argListTabCount);
         }
-
     }
 
-    private void statements() { // TODO: Sıkıntılı
-        printGrammar("<Statements>");
-        expression();
-        definition();
-        statements();
-
+    private void statements(int prevTabCount) {
+        int statementsTabCount = prevTabCount+1;
+        if (currentTokenIndex < tokens.size()) {
+            if (currentToken.getType() == Token.Type.RIGHTPAR) {
+                return; // epsilon case
+            }
+            printGrammar("<Statements>",statementsTabCount);
+            expression(statementsTabCount);
+            definition(statementsTabCount);
+            statements(statementsTabCount);
+        }
     }
 
-    private void expressions() { // TODO: Epsilon
-        printGrammar("<Expressions>");
-        expression();
-        expressions();
+
+    private void expressions(int prevTabCount) {
+        int expressionsTabCount = prevTabCount+1;
+        if (currentTokenIndex < tokens.size()) {
+            if (currentToken.getType() == Token.Type.RIGHTPAR) {
+                printGrammar("<Expressions>",expressionsTabCount);
+                printSpace(expressionsTabCount);
+                return; // epsilon case
+            }
+            printGrammar("<Expressions>",expressionsTabCount);
+            expression(expressionsTabCount);
+            expressions(expressionsTabCount);
+        }
     }
 
-    private void expression() {
-        printGrammar("<Expression>");
 
+    private void expression(int prevTabCount) {
+        int expressionTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.IDENTIFIER ||
                 currentToken.getType() == Token.Type.NUMBER ||
                 currentToken.getType() == Token.Type.CHAR ||
                 currentToken.getType() == Token.Type.BOOLEAN ||
                 currentToken.getType() == Token.Type.STRING) {
-            match(currentToken.getType(),true);
+            printGrammar("<Expression>",expressionTabCount);
+            match(currentToken.getType(),expressionTabCount);
         } else if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            expr();
-            match(Token.Type.RIGHTPAR,true);
+            printGrammar("<Expression>",expressionTabCount);
+            match(Token.Type.LEFTPAR,expressionTabCount);
+            expr(expressionTabCount);
+            match(Token.Type.RIGHTPAR,expressionTabCount);
         }
     }
 
-    private void expr() {
-        printGrammar("<Expr>");
-        letExpression();
-        condExpression();
-        ifExpression();
-        beginExpression();
-        funCall();
+    private void expr(int prevTabCount) {
+        int exprTabCount = prevTabCount+1;
+        printGrammar("<Expr>",exprTabCount);
+        letExpression(exprTabCount);
+        condExpression(exprTabCount);
+        ifExpression(exprTabCount);
+        beginExpression(exprTabCount);
+        funCall(exprTabCount);
     }
 
-    private void funCall() {
-        printGrammar("<FunCall>");
+    private void funCall(int prevTabCount) {
+        int funCallTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER,true);
-            expressions();
+            printGrammar("<FunCall>",funCallTabCount);
+            match(Token.Type.IDENTIFIER,funCallTabCount);
+            expressions(funCallTabCount);
         }
     }
 
-    private void letExpression() {
-        printGrammar("<LetExpression>");
+    private void letExpression(int prevTabCount) {
+        int letExpressionTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.LET) {
-            match(Token.Type.LET,true);
-            letExpr();
+            printGrammar("<LetExpression>",letExpressionTabCount);
+            match(Token.Type.LET,letExpressionTabCount);
+            letExpr(letExpressionTabCount);
         }
     }
 
-    private void letExpr() {
-        printGrammar("<LetExpression>");
+    private void letExpr(int prevTabCount) {
+        int letExprTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            varDefs();
-            match(Token.Type.RIGHTPAR,true);
-            statements();
+            printGrammar("<LetExpr>",letExprTabCount);
+            match(Token.Type.LEFTPAR,letExprTabCount);
+            varDefs(letExprTabCount);
+            match(Token.Type.RIGHTPAR,letExprTabCount);
+            statements(letExprTabCount);
         } else if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER,true);
-            match(Token.Type.LEFTPAR,false);
-            varDefs();
-            match(Token.Type.RIGHTPAR,true);
-            statements();
+            printGrammar("<LetExpr>",letExprTabCount);
+            match(Token.Type.IDENTIFIER,letExprTabCount);
+            match(Token.Type.LEFTPAR,letExprTabCount);
+            varDefs(letExprTabCount);
+            match(Token.Type.RIGHTPAR,letExprTabCount);
+            statements(letExprTabCount);
         }
     }
 
-    private void varDefs() {
-        printGrammar("<VarDefs>");
+    private void varDefs(int prevTabCount) {
+        int varDefsTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            match(Token.Type.IDENTIFIER,false);
-            expression();
-            match(Token.Type.RIGHTPAR,true);
-            varDef();
+            printGrammar("<VarDefs>",varDefsTabCount);
+            match(Token.Type.LEFTPAR,varDefsTabCount);
+            match(Token.Type.IDENTIFIER,varDefsTabCount);
+            expression(varDefsTabCount);
+            match(Token.Type.RIGHTPAR,varDefsTabCount);
+            varDef(varDefsTabCount);
+        }else {
+            printSpace(varDefsTabCount-1);
         }
     }
 
-    private void varDef() { // TODO: Epsilon eklenecek
-        printGrammar("<VarDef>");
-        varDefs();
+    private void varDef(int prevTabCount) {
+        int varDefTabCount = prevTabCount+1;
+        printGrammar("<VarDef>",varDefTabCount);
+        varDefs(varDefTabCount);
 
     }
 
-    private void condExpression() {
-        printGrammar("<CondExpression>");
+    private void condExpression(int prevTabCount) {
+        int condExpressionTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.COND) {
-            match(Token.Type.COND,true);
-            condBranches();
+            printGrammar("<CondExpression>",condExpressionTabCount);
+            match(Token.Type.COND,condExpressionTabCount);
+            condBranches(condExpressionTabCount);
         }
     }
 
-    private void condBranches() {
-        printGrammar("<CondBranches>");
+    private void condBranches(int prevTabCount) {
+        int condBranchesTabCount = prevTabCount+1;
+        printGrammar("<CondBranches>",condBranchesTabCount);
         if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            expression();
-            statements();
-            match(Token.Type.RIGHTPAR,true);
-            condBranches();
+            match(Token.Type.LEFTPAR,condBranchesTabCount);
+            expression(condBranchesTabCount);
+            statements(condBranchesTabCount);
+            match(Token.Type.RIGHTPAR,condBranchesTabCount);
+            condBranches(condBranchesTabCount);
         }
     }
 
-    private void condBranch() { // TODO: Epsilon eklenecek
-        printGrammar("<CondBranch>");
-        if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR,true);
-            expression();
-            statements();
-            match(Token.Type.RIGHTPAR,true);
+    private void condBranch(int prevTabCount) {
+        int condBranchTabCount = prevTabCount+1;
+        printGrammar("<CondBranch>",condBranchTabCount);
+        if (currentTokenIndex < tokens.size()) {
+            if (currentToken.getType() == Token.Type.RIGHTPAR) {
+                return; // epsilon case
+            }
+            match(Token.Type.LEFTPAR, condBranchTabCount);
+            expression(condBranchTabCount);
+            statements(condBranchTabCount);
+            match(Token.Type.RIGHTPAR, condBranchTabCount);
+            condBranches(condBranchTabCount);
         }
     }
 
-    private void ifExpression() {
-        printGrammar("<IfExpression>");
+
+    private void ifExpression(int prevTabCount) {
+        int ifExpressionTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.IF) {
-            match(Token.Type.IF,true);
-            expression();
-            expression();
-            endExpression();
+            printGrammar("<IfExpression>",ifExpressionTabCount);
+            match(Token.Type.IF,ifExpressionTabCount);
+            expression(ifExpressionTabCount);
+            expression(ifExpressionTabCount);
+            endExpression(ifExpressionTabCount);
         }
     }
 
-    private void endExpression() { // TODO: Epsilon eklenecek
-        printGrammar("<EndExpression>");
-        expression();
+    private void endExpression(int prevTabCount) {
+        int endExpressionTabCount = prevTabCount+1;
+        printGrammar("<EndExpression>",endExpressionTabCount);
+        if (currentTokenIndex < tokens.size()) {
+            expression(endExpressionTabCount);
+        }
     }
 
-    private void beginExpression() {
-        printGrammar("<BeginExpression>");
+
+    private void beginExpression(int prevTabCount) {
+        int beginExpressionTabCount = prevTabCount+1;
         if (currentToken.getType() == Token.Type.BEGIN) {
-            match(Token.Type.BEGIN,true);
-            statements();
+            printGrammar("<BeginExpression>",beginExpressionTabCount);
+            match(Token.Type.BEGIN,beginExpressionTabCount);
+            statements(beginExpressionTabCount);
         }
     }
 
-    private void match(Token.Type expectedTokenType,boolean changeTabCounter ) {
+    private void match(Token.Type expectedTokenType,int tabCount ) {
         if (currentToken.getType() == expectedTokenType) {
             advance();
         } else {
             throw new RuntimeException("Syntax error: Expected token " + expectedTokenType);
         }
-        printLexeme(changeTabCounter);
+        printLexeme(tabCount);
     }
 
     private void advance() {
         currentTokenIndex++;
         if (currentTokenIndex < tokens.size()) {
             currentToken = tokens.get(currentTokenIndex);
-        } else {
+        } else if (currentTokenIndex == tokens.size()){
+            return;
+        }else{
             throw new ArrayIndexOutOfBoundsException("Hayırdır oglım!");
         }
     }
