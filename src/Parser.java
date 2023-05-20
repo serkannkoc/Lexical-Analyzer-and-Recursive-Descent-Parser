@@ -15,9 +15,9 @@ public class Parser {
         this.currentToken = tokens.get(0);
     }
 
-    private void printGrammar(int count, String grammarName) {
+    private void printGrammar(String grammarName) {
         StringBuilder grammar = new StringBuilder();
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < tabCounter; i++) {
             grammar.append("\t");
         }
         grammar.append(grammarName);
@@ -25,9 +25,16 @@ public class Parser {
         tabCounter++;
     }
 
-    private void printLexeme(int count) {
+    private void printLexeme(boolean changeTabCounter) {
+        if(changeTabCounter){
+            if (tokens.get(currentTokenIndex-1).getType() == Token.Type.RIGHTPAR){
+                tabCounter--;
+            }else {
+                tabCounter++;
+            }
+        }
         StringBuilder lexeme = new StringBuilder();
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < tabCounter; i++) {
             lexeme.append("\t");
         }
         lexeme.append(tokens.get(currentTokenIndex - 1).getType());
@@ -41,115 +48,95 @@ public class Parser {
         program();
     }
 
-    private void program() {
-        if (currentTokenIndex >= tokens.size()) {
-            return; // epsilon case (end of token list)
-        }
-        printGrammar(tabCounter, "<Program>");
+    private void program() { // TODO: Epsilon eklenecek
+        printGrammar("<Program>");
+//        if (currentTokenIndex >= tokens.size()) {
+//            return; // epsilon case (end of token list)
+//        }
         topLevelForm();
         program();
     }
 
     private void topLevelForm() {
-        printGrammar(tabCounter, "<TopLevelForm>");
-        match(Token.Type.LEFTPAR);
-        tabCounter++;
-        printLexeme(tabCounter);
+        printGrammar("<TopLevelForm>");
+        match(Token.Type.LEFTPAR,true);
         secondLevelForm();
-        match(Token.Type.RIGHTPAR);
-        tabCounter--;
-        printLexeme(tabCounter);
+        match(Token.Type.RIGHTPAR,true);
     }
 
     private void secondLevelForm() {
-        printGrammar(tabCounter, "<SecondLevelForm>");
+        printGrammar("<SecondLevelForm>");
         definition();
         if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR);
-            tabCounter++;
-            printLexeme(tabCounter);
+            match(Token.Type.LEFTPAR,true);
             funCall();
-            match(Token.Type.RIGHTPAR);
-            tabCounter--;
-            printLexeme(tabCounter);
+            match(Token.Type.RIGHTPAR,true);
         }
     }
 
     private void definition() {
+        printGrammar("<Definition>");
         if (currentToken.getType() == Token.Type.DEFINE) {
-            printGrammar(tabCounter, "<Definition>");
-            match(Token.Type.DEFINE);
-            tabCounter++;
-            printLexeme(tabCounter);
+            match(Token.Type.DEFINE,true);
             definitionRight();
         }
     }
 
     private void definitionRight() {
-        printGrammar(tabCounter, "<DefinitionRight>");
-        if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR);
-            tabCounter++;
-            printLexeme(tabCounter);
-            match(Token.Type.IDENTIFIER);
-            printLexeme(tabCounter);
-            argList();
-            match(Token.Type.RIGHTPAR);
-            tabCounter--;
-            printLexeme(tabCounter);
-            statements();
-        } else if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER);
-            tabCounter++;
-            printLexeme(tabCounter);
-            expression();
-        }
-    }
-
-    private void argList() {
-        printGrammar(tabCounter, "<ArgList>");
+        printGrammar("<DefinitionRight>");
         if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER);
-            tabCounter++;
-            printLexeme(tabCounter);
+            match(Token.Type.IDENTIFIER,true);
+            expression();
+        } else if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR,true);
+            match(Token.Type.IDENTIFIER,false);
+            argList();
+            match(Token.Type.RIGHTPAR,true);
+            statements();
+        }
+    }
+
+    private void argList() { // TODO: Epsilon
+        printGrammar("<ArgList>");
+        if (currentToken.getType() == Token.Type.IDENTIFIER) {
+            match(Token.Type.IDENTIFIER,true);
             argList();
         }
 
     }
 
-    private void statements() {
+    private void statements() { // TODO: Sıkıntılı
+        printGrammar("<Statements>");
         expression();
-        if (currentToken.getType() == Token.Type.DEFINE) {
-            definition();
-            statements();
-        } else {
-            // Handle syntax error
-        }
+        definition();
+        statements();
+
+    }
+
+    private void expressions() { // TODO: Epsilon
+        printGrammar("<Expressions>");
+        expression();
+        expressions();
     }
 
     private void expression() {
+        printGrammar("<Expression>");
+
         if (currentToken.getType() == Token.Type.IDENTIFIER ||
                 currentToken.getType() == Token.Type.NUMBER ||
                 currentToken.getType() == Token.Type.CHAR ||
                 currentToken.getType() == Token.Type.BOOLEAN ||
                 currentToken.getType() == Token.Type.STRING) {
-            System.out.println("<Expression>");
-
-            match(currentToken.getType());
-            System.out.println(tokens.get(currentTokenIndex - 1).getType() + "(" + tokens.get(currentTokenIndex - 1).getLexeme() + ")");
+            match(currentToken.getType(),true);
         } else if (currentToken.getType() == Token.Type.LEFTPAR) {
-            System.out.println("<Expression>");
-
-            match(Token.Type.LEFTPAR);
-            System.out.println("LEFTPAR" + "(" + tokens.get(currentTokenIndex - 1).getLexeme() + ")");
+            match(Token.Type.LEFTPAR,true);
             expr();
-            match(Token.Type.RIGHTPAR);
-        } else {
-            // Handle syntax error
+            match(Token.Type.RIGHTPAR,true);
         }
     }
 
     private void expr() {
+        printGrammar("<Expr>");
         letExpression();
         condExpression();
         ifExpression();
@@ -157,117 +144,114 @@ public class Parser {
         funCall();
     }
 
-    private void expressions() {
-        expression();
-        expressions();
-    }
-
-    private void letExpression() {
-        if (currentToken.getType() == Token.Type.LET) {
-            match(Token.Type.LET);
-            letExpr();
-        }
-    }
-
-    private void beginExpression() {
-        if (currentToken.getType() == Token.Type.BEGIN) {
-            match(Token.Type.BEGIN);
-            statements();
-        }
-    }
-
     private void funCall() {
+        printGrammar("<FunCall>");
         if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER);
+            match(Token.Type.IDENTIFIER,true);
             expressions();
         }
     }
 
+    private void letExpression() {
+        printGrammar("<LetExpression>");
+        if (currentToken.getType() == Token.Type.LET) {
+            match(Token.Type.LET,true);
+            letExpr();
+        }
+    }
+
+    private void letExpr() {
+        printGrammar("<LetExpression>");
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR,true);
+            varDefs();
+            match(Token.Type.RIGHTPAR,true);
+            statements();
+        } else if (currentToken.getType() == Token.Type.IDENTIFIER) {
+            match(Token.Type.IDENTIFIER,true);
+            match(Token.Type.LEFTPAR,false);
+            varDefs();
+            match(Token.Type.RIGHTPAR,true);
+            statements();
+        }
+    }
+
+    private void varDefs() {
+        printGrammar("<VarDefs>");
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR,true);
+            match(Token.Type.IDENTIFIER,false);
+            expression();
+            match(Token.Type.RIGHTPAR,true);
+            varDef();
+        }
+    }
+
+    private void varDef() { // TODO: Epsilon eklenecek
+        printGrammar("<VarDef>");
+        varDefs();
+
+    }
+
     private void condExpression() {
+        printGrammar("<CondExpression>");
         if (currentToken.getType() == Token.Type.COND) {
-            match(Token.Type.COND);
+            match(Token.Type.COND,true);
             condBranches();
         }
     }
 
+    private void condBranches() {
+        printGrammar("<CondBranches>");
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR,true);
+            expression();
+            statements();
+            match(Token.Type.RIGHTPAR,true);
+            condBranches();
+        }
+    }
+
+    private void condBranch() { // TODO: Epsilon eklenecek
+        printGrammar("<CondBranch>");
+        if (currentToken.getType() == Token.Type.LEFTPAR) {
+            match(Token.Type.LEFTPAR,true);
+            expression();
+            statements();
+            match(Token.Type.RIGHTPAR,true);
+        }
+    }
+
     private void ifExpression() {
+        printGrammar("<IfExpression>");
         if (currentToken.getType() == Token.Type.IF) {
-            match(Token.Type.IF);
+            match(Token.Type.IF,true);
             expression();
             expression();
             endExpression();
         }
     }
 
-    private void letExpr() {
-        if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR);
-            varDefs();
-            match(Token.Type.RIGHTPAR);
-            statements();
-        } else if (currentToken.getType() == Token.Type.IDENTIFIER) {
-            match(Token.Type.IDENTIFIER);
-            match(Token.Type.LEFTPAR);
-            varDefs();
-            match(Token.Type.RIGHTPAR);
-            statements();
-        } else {
-            // Handle syntax error
-        }
-    }
-
-    private void varDefs() {
-        if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR);
-            match(Token.Type.IDENTIFIER);
-            expression();
-            match(Token.Type.RIGHTPAR);
-            varDef();
-        }
-    }
-
-    private void varDef() { // TODO: Epsilon eklenecek
-        varDefs();
-    }
-
-
-    private void condBranches() {
-        if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR);
-            expression();
-            statements();
-            match(Token.Type.RIGHTPAR);
-            condBranch();
-        }
-    }
-
-    private void condBranch() { // TODO: Epsilon eklenecek
-        if (currentToken.getType() == Token.Type.LEFTPAR) {
-            match(Token.Type.LEFTPAR);
-            expression();
-            statements();
-            match(Token.Type.RIGHTPAR);
-        }
-    }
-
-
     private void endExpression() { // TODO: Epsilon eklenecek
-        /*if (currentToken.getType() == TokenType.IDENTIFIER ||
-                currentToken.getType() == TokenType.NUMBER ||
-                currentToken.getType() == TokenType.CHAR ||
-                currentToken.getType() == TokenType.BOOLEAN ||
-                currentToken.getType() == TokenType.STRING ||
-                currentToken.getType() == TokenType.LEFTPAR) {*/
+        printGrammar("<EndExpression>");
         expression();
     }
 
+    private void beginExpression() {
+        printGrammar("<BeginExpression>");
+        if (currentToken.getType() == Token.Type.BEGIN) {
+            match(Token.Type.BEGIN,true);
+            statements();
+        }
+    }
 
-    private void match(Token.Type expectedTokenType) {
+    private void match(Token.Type expectedTokenType,boolean changeTabCounter ) {
         if (currentToken.getType() == expectedTokenType) {
             advance();
         } else {
             throw new RuntimeException("Syntax error: Expected token " + expectedTokenType);
         }
+        printLexeme(changeTabCounter);
     }
 
     private void advance() {
@@ -277,8 +261,7 @@ public class Parser {
         } else {
             throw new ArrayIndexOutOfBoundsException("Hayırdır oglım!");
         }
-
-
     }
+
 }
 
