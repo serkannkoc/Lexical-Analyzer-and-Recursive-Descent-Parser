@@ -29,6 +29,9 @@ public class Test {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        Parser parser = new Parser(tokenList);
+        parser.parse();
+
 
     }
 }
